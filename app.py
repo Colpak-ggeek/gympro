@@ -1,3 +1,14 @@
+"""
+GymPro - Система управления спортзалом
+=======================================
+Установка и запуск:
+  1. pip install flask
+  2. python app.py
+  3. Открыть браузер: http://127.0.0.1:5000
+
+Вход администратора: admin@gym.ru / admin123
+"""
+
 import sqlite3
 from datetime import datetime, timedelta
 from functools import wraps
@@ -20,6 +31,10 @@ PLANS = {
 }
 DAYS  = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 TYPES = ['Силовая', 'Кардио', 'Йога', 'HIIT', 'Пилатес', 'Растяжка', 'Бокс', 'Персональная']
+
+# ──────────────────────────────────────────────────────────────
+# БАЗА ДАННЫХ
+# ──────────────────────────────────────────────────────────────
 
 def get_db():
     if 'db' not in g:
@@ -97,6 +112,7 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
 
 def q(sql, args=(), one=False):
@@ -107,6 +123,10 @@ def run(sql, args=()):
     db = get_db()
     db.execute(sql, args)
     db.commit()
+
+# ──────────────────────────────────────────────────────────────
+# ДЕКОРАТОРЫ ДОСТУПА
+# ──────────────────────────────────────────────────────────────
 
 def login_required(f):
     @wraps(f)
@@ -126,11 +146,15 @@ def role_required(*roles):
         return wrap
     return decorator
 
+# ──────────────────────────────────────────────────────────────
+# ОБЩИЕ ШАБЛОНЫ (HTML)
+# ──────────────────────────────────────────────────────────────
+
 CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:
+:root{--bg:#0b0b0b;--sf:#111;--card:#171717;--brd:#252525;--brd2:#2e2e2e;--tx:#ebebeb;--mt:#7a7a7a;--dm:#333;--ac:#c0392b;--acl:#e74c3c;--acd:#c0392b18;--gr:#27ae60;--grd:#27ae6018;--yw:#d4a017;--ywd:#d4a01718;--bl:#2980b9;--bld:#2980b918;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--sf)}::-webkit-scrollbar-thumb{background:var(--brd2)}
@@ -144,35 +168,35 @@ table{width:100%;border-collapse:collapse;}
 th{text-align:left;padding:11px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--mt);border-bottom:1px solid var(--brd);}
 td{padding:13px 16px;border-bottom:1px solid var(--brd);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:
+tr:hover td{background:#ffffff04;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .fade{animation:fadeUp .25s ease forwards;}
 .layout{display:flex;min-height:100vh;}
-.sidebar{width:230px;background:var(--sf);border-right:1px solid var(--brd);padding:20px 10px;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:200;transition:transform .25s cubic-bezier(.4,0,.2,1);}.sidebar.sb-off{transform:translateX(-100%);}.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;}.sb-overlay.on{display:block;}
+.sidebar{width:230px;background:var(--sf);border-right:1px solid var(--brd);padding:20px 10px;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
 .logo{display:flex;align-items:center;gap:10px;padding:4px 10px 24px;}
-.logo-box{width:34px;height:34px;background:var(--ac);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;color:
+.logo-box{width:34px;height:34px;background:var(--ac);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
 .logo-txt{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:1px;}
 .nav-sec{padding:0 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--dm);margin:18px 0 8px;}
 .nav-a{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:3px;color:var(--mt);font-size:14px;font-weight:500;transition:all .15s;cursor:pointer;}
-.nav-a:hover{background:
+.nav-a:hover{background:#ffffff06;color:var(--tx);}
 .nav-a.on{background:var(--acd);color:var(--acl);}
 .nav-ico{width:15px;text-align:center;font-size:12px;}
 .sb-bot{margin-top:auto;padding-top:16px;border-top:1px solid var(--brd);}
-.main{flex:1;overflow-y:auto;min-width:0;transition:margin-left .25s cubic-bezier(.4,0,.2,1);}
+.main{flex:1;overflow-y:auto;}
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;border-bottom:1px solid var(--brd);background:var(--sf);position:sticky;top:0;z-index:10;}
 .tb-title{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.5px;}
 .tb-user{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--mt);}
-.avatar{width:30px;height:30px;background:var(--acd);border:1px solid
+.avatar{width:30px;height:30px;background:var(--acd);border:1px solid #c0392b30;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--acl);}
 .content{padding:28px;}
 .ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
 .ptitle{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;letter-spacing:-.5px;}
 .psub{color:var(--mt);font-size:13px;margin-top:5px;}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 17px;border-radius:3px;font-size:13px;font-weight:600;border:none;transition:all .15s;white-space:nowrap;cursor:pointer;}
-.bp{background:var(--ac);color:
+.bp{background:var(--ac);color:#fff;}.bp:hover{background:var(--acl);}
 .bo{background:transparent;color:var(--mt);border:1px solid var(--brd);}.bo:hover{border-color:var(--mt);color:var(--tx);}
-.bg{background:transparent;color:var(--mt);border:none;padding:8px 13px;}.bg:hover{color:var(--tx);background:
+.bg{background:transparent;color:var(--mt);border:none;padding:8px 13px;}.bg:hover{color:var(--tx);background:#ffffff06;}
 .bd{background:transparent;color:var(--acl);border:1px solid var(--acd);}.bd:hover{background:var(--acd);}
-.bs{background:var(--grd);color:var(--gr);border:1px solid
+.bs{background:var(--grd);color:var(--gr);border:1px solid #27ae6028;}.bs:hover{background:#27ae6022;}
 .btn-sm{padding:6px 12px;font-size:12px;}
 .btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none;}
 .card{background:var(--card);border:1px solid var(--brd);border-radius:5px;padding:22px;}
@@ -188,7 +212,7 @@ tr:hover td{background:
 .bre{background:var(--acd);color:var(--acl);}
 .bbl{background:var(--bld);color:var(--bl);}
 .byw{background:var(--ywd);color:var(--yw);}
-.bdm{background:
+.bdm{background:#ffffff0a;color:var(--mt);}
 .divider{height:1px;background:var(--brd);margin:20px 0;}
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:15px;}
 .fl{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--mt);}
@@ -198,8 +222,8 @@ tr:hover td{background:
 .stitle{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--tx);margin-bottom:14px;}
 .flash-w{padding:0 28px;margin-top:14px;}
 .flash{padding:11px 16px;border-radius:3px;font-size:14px;margin-bottom:8px;}
-.f-ok{background:var(--grd);color:var(--gr);border:1px solid
-.f-err{background:var(--acd);color:var(--acl);border:1px solid
+.f-ok{background:var(--grd);color:var(--gr);border:1px solid #27ae6028;}
+.f-err{background:var(--acd);color:var(--acl);border:1px solid #c0392b28;}
 .progress{height:4px;background:var(--brd);border-radius:2px;overflow:hidden;margin-top:6px;}
 .pf{height:100%;border-radius:2px;}
 .empty{text-align:center;padding:50px 20px;color:var(--mt);}
@@ -208,18 +232,7 @@ tr:hover td{background:
 .fb{display:flex;align-items:center;gap:9px;margin-bottom:18px;}
 .fb input{max-width:260px;}
 .sec-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--dm);padding-bottom:10px;border-bottom:1px solid var(--brd);margin-bottom:15px;}
-.err-box{background:
-@media(max-width:720px){
-  .g2{grid-template-columns:1fr!important;}
-  .g3{grid-template-columns:1fr!important;}
-  .g4{grid-template-columns:1fr 1fr!important;}
-  .content{padding:14px!important;}
-  .topbar{padding:12px 14px!important;}
-  .ptitle{font-size:17px!important;}
-  .sval{font-size:24px!important;}
-  td{padding:10px 12px!important;}
-  th{padding:9px 12px!important;}
-}
+.err-box{background:#1a0808;border:1px solid #c0392b28;color:var(--acl);padding:10px 14px;border-radius:3px;font-size:13px;margin-bottom:18px;}
 </style>
 """
 
@@ -229,6 +242,7 @@ def base_layout(content, page_title="", topbar_title=""):
     email= session.get('email','')
     av   = (name[:2].upper()) if name else 'U'
 
+    # nav items per role
     if role == 'admin':
         nav = f"""
         <span class="nav-sec">Управление</span>
@@ -255,6 +269,7 @@ def base_layout(content, page_title="", topbar_title=""):
     flashes = ''
     for cat, msg in session.pop('_flashes', []) if False else []:
         pass
+    # use get_flashed_messages via jinja - we'll handle differently
     flash_html = '{% with msgs=get_flashed_messages(with_categories=true) %}{% if msgs %}<div class="flash-w">{% for cat,msg in msgs %}<div class="flash {{ "f-ok" if cat=="success" else "f-err" }}">{{msg}}</div>{% endfor %}</div>{% endif %}{% endwith %}'
 
     return f"""<!DOCTYPE html>
@@ -276,50 +291,21 @@ def base_layout(content, page_title="", topbar_title=""):
 </aside>
 <div class="main">
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:12px;"><button id="sb-btn" onclick="sbToggle()" style="background:none;border:none;cursor:pointer;padding:4px 6px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;"><span style="display:block;width:18px;height:2px;background:var(--mt);border-radius:2px;"></span><span style="display:block;width:18px;height:2px;background:var(--mt);border-radius:2px;"></span><span style="display:block;width:13px;height:2px;background:var(--mt);border-radius:2px;"></span></button><span class="tb-title">{topbar_title}</span></div>
-    <div class="tb-user"><div class="avatar">{av}</div></div>
+    <span class="tb-title">{topbar_title}</span>
+    <div class="tb-user"><div class="avatar">{av}</div><span>{email}</span></div>
   </div>
   {flash_html}
   <div class="content fade">{content}</div>
 </div>
 </div>
-<div class="sb-overlay" id="sb-ov" onclick="sbClose()"></div>
-<script>
-var _sbOpen = true;
-function sbToggle() {{
-  var sb = document.querySelector('.sidebar');
-  var ov = document.getElementById('sb-ov');
-  var mn = document.querySelector('.main');
-  if (_sbOpen) {{
-    sb.classList.add('sb-off');
-    ov.classList.remove('on');
-    mn.style.marginLeft = '0';
-    _sbOpen = false;
-  }} else {{
-    sb.classList.remove('sb-off');
-    mn.style.marginLeft = '';
-    if (window.innerWidth <= 720) ov.classList.add('on');
-    _sbOpen = true;
-  }}
-}}
-function sbClose() {{
-  var sb = document.querySelector('.sidebar');
-  var ov = document.getElementById('sb-ov');
-  sb.classList.add('sb-off');
-  ov.classList.remove('on');
-  document.querySelector('.main').style.marginLeft = '0';
-  _sbOpen = false;
-}}
-if (window.innerWidth <= 720) {{
-  document.querySelector('.sidebar').classList.add('sb-off');
-  document.querySelector('.main').style.marginLeft = '0';
-  _sbOpen = false;
-}}
-</script>
 </body></html>"""
 
 def render(content, page_title="", topbar_title=""):
     return render_template_string(base_layout(content, page_title, topbar_title))
+
+# ──────────────────────────────────────────────────────────────
+# AUTH
+# ──────────────────────────────────────────────────────────────
 
 LOGIN_HTML = """<!DOCTYPE html>
 <html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -328,18 +314,18 @@ LOGIN_HTML = """<!DOCTYPE html>
 body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
 .wrap{width:370px;max-width:100%;}
 .llogo{text-align:center;margin-bottom:36px;}
-.lbox{width:46px;height:46px;background:var(--ac);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;color:
+.lbox{width:46px;height:46px;background:var(--ac);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;color:#fff;margin-bottom:14px;}
 h1{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;letter-spacing:2px;}
 p{color:var(--mt);font-size:13px;margin-top:5px;}
 .box{background:var(--sf);border:1px solid var(--brd);border-radius:5px;padding:28px;}
 .fl{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--mt);margin-bottom:5px;}
 .fg{margin-bottom:14px;}
-.sbtn{display:block;width:100%;padding:12px;background:var(--ac);color:
+.sbtn{display:block;width:100%;padding:12px;background:var(--ac);color:#fff;border:none;border-radius:3px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:6px;}
 .sbtn:hover{background:var(--acl);}
-.err{background:
-.hint{background:
+.err{background:#1a0808;border:1px solid #c0392b28;color:var(--acl);padding:10px 14px;border-radius:3px;font-size:13px;margin-bottom:14px;}
+.hint{background:#0e0e0e;border:1px solid #1e1e1e;border-radius:3px;padding:12px;margin-top:18px;}
 .ht{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--dm);margin-bottom:9px;}
-.hr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid
+.hr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a1a1a;font-size:12px;}
 .hr:last-child{border-bottom:none;}
 .link{color:var(--ac);font-size:13px;}
 .link:hover{color:var(--acl);}
@@ -373,7 +359,7 @@ REGISTER_HTML = """<!DOCTYPE html>
 body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:30px 16px;}
 .wrap{width:460px;max-width:100%;}
 .lhdr{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
-.lbox{width:34px;height:34px;background:var(--ac);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;color:
+.lbox{width:34px;height:34px;background:var(--ac);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;color:#fff;}
 h1{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;letter-spacing:1.5px;}
 .box{background:var(--sf);border:1px solid var(--brd);border-radius:5px;padding:28px;}
 .btitle{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;margin-bottom:4px;}
@@ -381,9 +367,9 @@ h1{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;letter-s
 .fl{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--mt);margin-bottom:5px;}
 .fg{margin-bottom:0;}
 .sec{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--dm);padding-bottom:9px;border-bottom:1px solid var(--brd);margin:18px 0 14px;}
-.sbtn{display:block;width:100%;padding:12px;background:var(--ac);color:
+.sbtn{display:block;width:100%;padding:12px;background:var(--ac);color:#fff;border:none;border-radius:3px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:20px;}
 .sbtn:hover{background:var(--acl);}
-.err{background:
+.err{background:#1a0808;border:1px solid #c0392b28;color:var(--acl);padding:10px 14px;border-radius:3px;font-size:13px;margin-bottom:16px;}
 .link{color:var(--ac);font-size:13px;}.link:hover{color:var(--acl);}
 </style></head>
 <body>
@@ -484,6 +470,10 @@ def register():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+# ──────────────────────────────────────────────────────────────
+# ADMIN
+# ──────────────────────────────────────────────────────────────
 
 @app.route('/admin')
 @role_required('admin')
@@ -891,6 +881,10 @@ def admin_subs():
     """
     return render(c, "Абонементы", "Абонементы")
 
+# ──────────────────────────────────────────────────────────────
+# TRAINER
+# ──────────────────────────────────────────────────────────────
+
 @app.route('/trainer')
 @role_required('trainer')
 def trainer_dash():
@@ -949,6 +943,10 @@ def trainer_workout(wid):
     <div class="tw"><table><thead><tr><th>Имя</th><th>Email</th><th>Телефон</th><th>Дата записи</th></tr></thead><tbody>{part_rows}</tbody></table></div>
     """
     return render(c, w['name'], "Участники занятия")
+
+# ──────────────────────────────────────────────────────────────
+# CLIENT CABINET
+# ──────────────────────────────────────────────────────────────
 
 @app.route('/cabinet')
 @role_required('client')
@@ -1210,10 +1208,14 @@ def cabinet_profile():
     </div></div>"""
     return render(c, "Профиль", "Мой профиль")
 
+# ──────────────────────────────────────────────────────────────
+# RUN
+# ──────────────────────────────────────────────────────────────
+
 if __name__ == '__main__':
     init_db()
     print("\n GymPro запущен!")
     print(" Открыть: http://127.0.0.1:5000")
     print(" Вход:    admin@gym.ru / admin123\n")
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
