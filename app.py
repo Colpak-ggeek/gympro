@@ -1,4 +1,5 @@
 
+
 import sqlite3
 from datetime import datetime, timedelta
 from functools import wraps
@@ -7,10 +8,9 @@ from flask import (Flask, g, request, redirect, url_for,
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'gympro_secret_key_2024'
 import os
+app.secret_key = 'gympro_secret_key_2024'
 DB_PATH = os.environ.get('DB_PATH', '/tmp/gym.db')
-
 
 PLANS = {
     'basic':    {'name': 'Базовый',  'price': 2500,
@@ -20,7 +20,6 @@ PLANS = {
     'premium':  {'name': 'Премиум',  'price': 7500,
                  'features': ['Всё из Стандарт', '4 персональных/мес', 'Сауна', 'Приоритет записи']},
 }
-
 DAYS  = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 TYPES = ['Силовая', 'Кардио', 'Йога', 'HIIT', 'Пилатес', 'Растяжка', 'Бокс', 'Персональная']
 
@@ -103,7 +102,7 @@ def init_db():
     conn.close()
 
 
-init_db() 
+init_db()
 
 def q(sql, args=(), one=False):
     cur = get_db().execute(sql, args)
@@ -134,6 +133,7 @@ def role_required(*roles):
     return decorator
 
 
+
 CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -156,7 +156,7 @@ tr:hover td{background:#ffffff04;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .fade{animation:fadeUp .25s ease forwards;}
 .layout{display:flex;min-height:100vh;}
-.sidebar{width:230px;background:var(--sf);border-right:1px solid var(--brd);padding:20px 10px;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar{width:230px;background:var(--sf);border-right:1px solid var(--brd);padding:20px 10px;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:200;transition:transform .25s cubic-bezier(.4,0,.2,1);}.sidebar.sb-off{transform:translateX(-100%);}.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;}.sb-overlay.on{display:block;}
 .logo{display:flex;align-items:center;gap:10px;padding:4px 10px 24px;}
 .logo-box{width:34px;height:34px;background:var(--ac);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
 .logo-txt{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:1px;}
@@ -166,7 +166,7 @@ tr:hover td{background:#ffffff04;}
 .nav-a.on{background:var(--acd);color:var(--acl);}
 .nav-ico{width:15px;text-align:center;font-size:12px;}
 .sb-bot{margin-top:auto;padding-top:16px;border-top:1px solid var(--brd);}
-.main{flex:1;overflow-y:auto;}
+.main{flex:1;overflow-y:auto;min-width:0;transition:margin-left .25s cubic-bezier(.4,0,.2,1);}
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;border-bottom:1px solid var(--brd);background:var(--sf);position:sticky;top:0;z-index:10;}
 .tb-title{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.5px;}
 .tb-user{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--mt);}
@@ -217,6 +217,17 @@ tr:hover td{background:#ffffff04;}
 .fb input{max-width:260px;}
 .sec-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--dm);padding-bottom:10px;border-bottom:1px solid var(--brd);margin-bottom:15px;}
 .err-box{background:#1a0808;border:1px solid #c0392b28;color:var(--acl);padding:10px 14px;border-radius:3px;font-size:13px;margin-bottom:18px;}
+@media(max-width:720px){
+  .g2{grid-template-columns:1fr!important;}
+  .g3{grid-template-columns:1fr!important;}
+  .g4{grid-template-columns:1fr 1fr!important;}
+  .content{padding:14px!important;}
+  .topbar{padding:12px 14px!important;}
+  .ptitle{font-size:17px!important;}
+  .sval{font-size:24px!important;}
+  td{padding:10px 12px!important;}
+  th{padding:9px 12px!important;}
+}
 </style>
 """
 
@@ -226,7 +237,7 @@ def base_layout(content, page_title="", topbar_title=""):
     email= session.get('email','')
     av   = (name[:2].upper()) if name else 'U'
 
-
+    # nav items per role
     if role == 'admin':
         nav = f"""
         <span class="nav-sec">Управление</span>
@@ -253,7 +264,7 @@ def base_layout(content, page_title="", topbar_title=""):
     flashes = ''
     for cat, msg in session.pop('_flashes', []) if False else []:
         pass
-
+    # use get_flashed_messages via jinja - we'll handle differently
     flash_html = '{% with msgs=get_flashed_messages(with_categories=true) %}{% if msgs %}<div class="flash-w">{% for cat,msg in msgs %}<div class="flash {{ "f-ok" if cat=="success" else "f-err" }}">{{msg}}</div>{% endfor %}</div>{% endif %}{% endwith %}'
 
     return f"""<!DOCTYPE html>
@@ -275,13 +286,46 @@ def base_layout(content, page_title="", topbar_title=""):
 </aside>
 <div class="main">
   <div class="topbar">
-    <span class="tb-title">{topbar_title}</span>
-    <div class="tb-user"><div class="avatar">{av}</div><span>{email}</span></div>
+    <div style="display:flex;align-items:center;gap:12px;"><button id="sb-btn" onclick="sbToggle()" style="background:none;border:none;cursor:pointer;padding:4px 6px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;"><span style="display:block;width:18px;height:2px;background:var(--mt);border-radius:2px;"></span><span style="display:block;width:18px;height:2px;background:var(--mt);border-radius:2px;"></span><span style="display:block;width:13px;height:2px;background:var(--mt);border-radius:2px;"></span></button><span class="tb-title">{topbar_title}</span></div>
+    <div class="tb-user"><div class="avatar">{av}</div></div>
   </div>
   {flash_html}
   <div class="content fade">{content}</div>
 </div>
 </div>
+<div class="sb-overlay" id="sb-ov" onclick="sbClose()"></div>
+<script>
+var _sbOpen = true;
+function sbToggle() {{
+  var sb = document.querySelector('.sidebar');
+  var ov = document.getElementById('sb-ov');
+  var mn = document.querySelector('.main');
+  if (_sbOpen) {{
+    sb.classList.add('sb-off');
+    ov.classList.remove('on');
+    mn.style.marginLeft = '0';
+    _sbOpen = false;
+  }} else {{
+    sb.classList.remove('sb-off');
+    mn.style.marginLeft = '';
+    if (window.innerWidth <= 720) ov.classList.add('on');
+    _sbOpen = true;
+  }}
+}}
+function sbClose() {{
+  var sb = document.querySelector('.sidebar');
+  var ov = document.getElementById('sb-ov');
+  sb.classList.add('sb-off');
+  ov.classList.remove('on');
+  document.querySelector('.main').style.marginLeft = '0';
+  _sbOpen = false;
+}}
+if (window.innerWidth <= 720) {{
+  document.querySelector('.sidebar').classList.add('sb-off');
+  document.querySelector('.main').style.marginLeft = '0';
+  _sbOpen = false;
+}}
+</script>
 </body></html>"""
 
 def render(content, page_title="", topbar_title=""):
@@ -860,7 +904,6 @@ def admin_subs():
     return render(c, "Абонементы", "Абонементы")
 
 
-
 @app.route('/trainer')
 @role_required('trainer')
 def trainer_dash():
@@ -919,6 +962,7 @@ def trainer_workout(wid):
     <div class="tw"><table><thead><tr><th>Имя</th><th>Email</th><th>Телефон</th><th>Дата записи</th></tr></thead><tbody>{part_rows}</tbody></table></div>
     """
     return render(c, w['name'], "Участники занятия")
+
 
 
 @app.route('/cabinet')
@@ -1183,10 +1227,8 @@ def cabinet_profile():
 
 
 if __name__ == '__main__':
-    import os
     init_db()
-    port = int(os.environ.get('PORT', 5000))
-    print(f"\n GymPro запущен на порту {port}")
-    app.run(host='0.0.0.0', port=port, debug=False)
-
-
+    print("\n GymPro запущен!")
+    print(" Открыть: http://127.0.0.1:5000")
+    print(" Вход:    admin@gym.ru / admin123\n")
+    app.run(debug=True)
